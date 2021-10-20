@@ -5,15 +5,23 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <algorithm>
 
 void PrintUsage()
 {
-    std::cout << "\n\nUsage: ./BinHeader $filename$\nThe program outputs a 'data_header.h' file if successful, and outputs an error message if the file could not be opened.\n\n\n";
+    std::cout <<
+    R"END(
+    Usage:  BinHead $file_name$ or
+            BinHead $file_name$ $output_name$
+
+            This outputs a $output_name$.h file, which you can include in your project.
+    )END"
+    << std::endl;
 }
 
 int main(int argc, char** argv)
 {
-    if(argc != 2)
+    if(argc < 2)
     {
         PrintUsage();
         return 0;
@@ -32,8 +40,19 @@ int main(int argc, char** argv)
     file.read(reinterpret_cast<char*>(buffer), file_len);
     file.close();
 
-    std::ofstream output("data_header.h");
-    output << "#ifndef BINARY_HEADER_DATA_H\n#define BINARY_HEADER_DATA_H\n\nstatic const unsigned char my_data[] = {\n\t";
+    std::string filename, filenameUpper;
+    std::ofstream output;
+    if(argc == 2)
+        filename = "data_header";
+    else if(argc == 3)
+        filename = std::string(argv[2]);
+
+    output.open(filename + ".h");
+    filenameUpper = filename;
+
+    std::transform(filename.begin(), filename.end(), filenameUpper.begin(), ::toupper);
+
+    output << "#ifndef " + filenameUpper + "_H\n#define " + filenameUpper + "_H \n\nstatic const unsigned char " + filename + "_DATA[] = {\n\t";
     for(int i = 0; i < file_len; i++)
     {
         std::stringstream ss;
@@ -42,7 +61,8 @@ int main(int argc, char** argv)
             ss << "\n\t";
         output << ss.str();
     }
-    output << "\n};\n\n#endif";
+    output << "\n};\nunsigned int " + filename + "_LENGTH = " + std::to_string(file_len) + ";\n#endif // " + filename + "_H";
     output.close();
+    delete[] buffer;
     return 0;
 }
