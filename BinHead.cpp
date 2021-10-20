@@ -43,7 +43,12 @@ int main(int argc, char** argv)
     std::string filename, filenameUpper;
     std::ofstream output;
     if(argc == 2)
-        filename = "data_header";
+    {
+        filename = std::string(argv[1]);
+
+        if(filename.find('.') != filename.npos)
+            filename = filename.substr(0, filename.find('.'));
+    }
     else if(argc == 3)
         filename = std::string(argv[2]);
 
